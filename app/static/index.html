@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Cohleidoscope | Модель когерентных целей</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 40px; background: #1e1e2f; color: #fff; }
+        .container { max-width: 900px; margin: auto; background: #2a2a40; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        h1 { color: #8a2be2; text-align: center; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 10px; background: #1e1e2f; padding: 10px; border-radius: 8px; }
+        input, select { padding: 10px; background: #333; border: 1px solid #555; color: #fff; border-radius: 6px; }
+        input[type="text"] { flex: 1; }
+        button { padding: 12px 24px; background: #8a2be2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #9b4dca; }
+        #result-panel { margin-top: 30px; padding: 20px; background: #1e1e2f; border: 1px solid #8a2be2; border-radius: 8px; display: none; }
+        pre { white-space: pre-wrap; font-size: 14px; color: #00ffcc; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cohleidoscope</h1>
+        <p style="text-align:center; color:#aaa;">Модель формирования когерентного ряда целей</p>
+        
+        <div id="images-container"></div>
+        <button onclick="addImage()" style="background:#333; border:1px solid #8a2be2;">+ Добавить образ</button>
+        
+        <br><br>
+        <button onclick="calculate()" style="width:100%;">Рассчитать модель</button>
+
+        <div id="result-panel">
+            <h3>Результаты расчета</h3>
+            <pre id="output"></pre>
+        </div>
+    </div>
+
+    <script>
+        let count = 0;
+
+        function addImage() {
+            count++;
+            const div = document.createElement('div');
+            div.className = 'input-row';
+            div.innerHTML = `
+                <input type="text" placeholder="Название (Копилка)" id="name_${count}">
+                <select id="type_${count}">
+                    <option value="0">Текущее</option>
+                    <option value="1">Желаемое</option>
+                </select>
+                <input type="text" placeholder="Теги (деньги, переезд)" id="tags_${count}">
+            `;
+            document.getElementById('images-container').appendChild(div);
+        }
+
+        // Дефолтные поля для примера
+        addImage(); addImage(); addImage();
+
+        async function calculate() {
+            const images = [];
+            for (let i = 1; i <= count; i++) {
+                const name = document.getElementById(`name_${i}`).value;
+                if (!name) continue;
+                images.push({
+                    name: name,
+                    type: parseInt(document.getElementById(`type_${i}`).value),
+                    tags: document.getElementById(`tags_${i}`).value
+                });
+            }
+
+            if (images.length < 4) {
+                alert("Для работы модели нужно минимум 4 образа!");
+                return;
+            }
+
+            const res = await fetch('/api/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ images: images })
+            });
+            const data = await res.json();
+            
+            document.getElementById('result-panel').style.display = 'block';
+            document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>
